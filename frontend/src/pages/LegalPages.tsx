@@ -1,3 +1,4 @@
+import React from 'react';
 import { MainLayout } from '@/src/components/layout';
 
 const LegalPageLayout = ({ title, children }: { title: string, children: React.ReactNode }) => (
