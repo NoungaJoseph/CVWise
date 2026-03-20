@@ -23,8 +23,15 @@ export const TemplatesPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleSelectTemplate = () => {
-    navigate('/login');
+  const { setTemplate } = useEditor();
+
+  const handleSelectTemplate = (id: string = 'modern-minimal') => {
+    setTemplate(id);
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
   };
 
   const templates = [
@@ -98,7 +105,7 @@ export const TemplatesPage = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {templates.map(template => (
-              <TemplateCard key={template.id} template={template} onSelect={handleSelectTemplate} />
+              <TemplateCard key={template.id} template={template} onSelect={() => handleSelectTemplate(template.id)} />
             ))}
             
             {/* Custom Blueprint Placeholder */}
@@ -137,6 +144,8 @@ export const TemplatesPage = () => {
     </MainLayout>
   );
 };
+
+import { useEditor } from '../lib/EditorContext';
 
 const TemplateCard: React.FC<{ template: any; onSelect: () => void }> = ({ template, onSelect }) => (
   <div className={cn("group relative flex flex-col bg-surface-container-lowest rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-on-surface/5")}>

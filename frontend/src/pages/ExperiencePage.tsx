@@ -7,17 +7,67 @@ import {
   Calendar, 
   Building2,
   Sparkles,
-  ChevronRight,
   Eye,
-  Trash
+  ArrowRight,
+  User
 } from 'lucide-react';
 import { DashboardLayout } from '@/src/components/layout';
 import { Button, Input, Card } from '@/src/components/ui';
 import { cn } from '@/src/lib/utils';
+import { useEditor, Experience } from '@/src/lib/EditorContext';
+import { useNavigate } from 'react-router-dom';
 
 export const ExperiencePage = () => {
+  const { cvData, updateExperience, addExperience, calculateProgress } = useEditor();
+  const navigate = useNavigate();
+  const progress = calculateProgress();
+  
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [formData, setFormData] = React.useState<Partial<Experience>>({
+    title: '',
+    company: '',
+    period: '',
+    description: ''
+  });
+
+  const handleEdit = (exp: Experience) => {
+    setEditingId(exp.id);
+    setFormData(exp);
+  };
+
+  const handleDelete = (id: string) => {
+    updateExperience(cvData.experience.filter(e => e.id !== id));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdate = () => {
+    if (editingId) {
+      updateExperience(cvData.experience.map(e => e.id === editingId ? { ...e, ...formData } as Experience : e));
+      setEditingId(null);
+      setFormData({ title: '', company: '', period: '', description: '' });
+    } else {
+      const newExp: Experience = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: formData.title || '',
+        company: formData.company || '',
+        period: formData.period || '',
+        description: formData.description || ''
+      };
+      addExperience(newExp);
+      setFormData({ title: '', company: '', period: '', description: '' });
+    }
+  };
+
+  const handleSaveAndNext = () => {
+    navigate('/editor/education');
+  };
+
   return (
-    <DashboardLayout cvTitle="Resume Architect" cvSub="Editorial Mode">
+    <DashboardLayout cvTitle={cvData.title} cvSub="Editorial Mode">
       <div className="max-w-screen-2xl mx-auto px-4 md:px-12 py-6 md:py-10 grid grid-cols-12 gap-8 md:gap-12">
         {/* Editor Side */}
         <div className="col-span-12 lg:col-span-7">
@@ -29,9 +79,12 @@ export const ExperiencePage = () => {
             <div className="text-left md:text-right flex flex-col items-start md:items-end w-full md:w-auto">
               <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F97316] mb-1">Step 2 of 5</p>
               <div className="w-full md:w-32 h-1 bg-[#E1E2E4] rounded-full overflow-hidden mb-4 md:mb-1">
-                <div className="h-full bg-[#F97316] w-[40%]"></div>
+                <div className="h-full bg-[#F97316]" style={{ width: `${progress}%` }}></div>
               </div>
-              <Button className="w-full md:w-auto bg-[#F97316] text-white hover:bg-[#EA580C] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm order-first md:order-last mb-4 md:mb-0">
+              <Button 
+                onClick={() => { setEditingId(null); setFormData({ title: '', company: '', period: '', description: '' }); }}
+                className="w-full md:w-auto bg-[#F97316] text-white hover:bg-[#EA580C] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm order-first md:order-last mb-4 md:mb-0"
+              >
                 <Plus className="w-4 h-4" />
                 Add Position
               </Button>
@@ -39,57 +92,67 @@ export const ExperiencePage = () => {
           </header>
 
               <div className="space-y-6">
-                <ExperienceItem 
-                  title="Senior Creative Director"
-                  company="Apple Inc."
-                  period="Jan 2020 — Present"
-                  description="Leading the global brand architecture and design systems for next-generation hardware products."
-                  isActive
-                />
-                <ExperienceItem 
-                  title="Design Lead"
-                  company="Nike"
-                  period="Mar 2017 — Dec 2019"
-                  description="Spearheaded the digital transformation of the Nike+ ecosystem, resulting in a 40% increase in user engagement."
-                />
-                <ExperienceItem 
-                  title="Senior Product Designer"
-                  company="Airbnb"
-                  period="Jun 2014 — Feb 2017"
-                  description="Reimagined the host experience platform, focusing on high-end luxury listings and global localization."
-                />
+                {cvData.experience.map(exp => (
+                  <ExperienceItem 
+                    key={exp.id}
+                    title={exp.title}
+                    company={exp.company}
+                    period={exp.period}
+                    description={exp.description}
+                    isActive={editingId === exp.id}
+                    onEdit={() => handleEdit(exp)}
+                    onDelete={() => handleDelete(exp.id)}
+                  />
+                ))}
+                {cvData.experience.length === 0 && (
+                  <div className="text-center py-12 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200">
+                    <Briefcase className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 font-medium">No experience added yet. Let's build your history!</p>
+                  </div>
+                )}
               </div>
 
               {/* Active Form */}
               <div className="mt-12 pt-12 border-t border-outline-variant/10 space-y-8">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F97316] mb-1">Step 2 of 5</p>
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-outline">Edit Position</h3>
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-outline">
+                  {editingId ? 'Edit Position' : 'New Position'}
+                </h3>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Job Title</label>
-                    <Input defaultValue="Senior Creative Director" />
+                    <Input 
+                      name="title"
+                      value={formData.title} 
+                      onChange={handleInputChange}
+                      placeholder="e.g. Senior Creative Director"
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Company</label>
                     <div className="relative">
                       <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                      <Input className="pl-12" defaultValue="Apple Inc." />
+                      <Input 
+                        name="company"
+                        className="pl-12" 
+                        value={formData.company} 
+                        onChange={handleInputChange}
+                        placeholder="e.g. Apple Inc."
+                      />
                     </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">Start Date</label>
+                    <label className="text-sm font-bold text-on-surface-variant ml-1">Period (Start — End)</label>
                     <div className="relative">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                      <Input className="pl-12" placeholder="MM/YYYY" defaultValue="01/2020" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-on-surface-variant ml-1">End Date</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                      <Input className="pl-12" placeholder="Present" defaultValue="Present" />
+                      <Input 
+                        name="period"
+                        className="pl-12" 
+                        placeholder="e.g. Jan 2020 — Present" 
+                        value={formData.period} 
+                        onChange={handleInputChange}
+                      />
                     </div>
                   </div>
                 </div>
@@ -102,14 +165,28 @@ export const ExperiencePage = () => {
                     </button>
                   </div>
                   <textarea 
-                    className="w-full bg-surface-container-highest border-none px-4 py-4 rounded-lg text-on-surface placeholder:text-outline focus:ring-0 focus:bg-surface-container-lowest transition-all min-h-[200px] resize-none"
-                    defaultValue="Leading the global brand architecture and design systems for next-generation hardware products. Managed a team of 25+ designers and researchers."
+                    name="description"
+                    className="w-full bg-surface-container-highest border-none px-4 py-4 rounded-lg text-on-surface placeholder:text-outline focus:ring-1 focus:ring-[#F97316]/20 focus:bg-surface-container-lowest transition-all min-h-[200px] resize-none"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    placeholder="Describe your role and impact..."
                   ></textarea>
                 </div>
                 <div className="flex justify-end gap-4">
-                  <Button variant="ghost">Cancel</Button>
-                  <Button variant="primary">Update Position</Button>
+                  <Button variant="outline" onClick={() => { setEditingId(null); setFormData({ title: '', company: '', period: '', description: '' }); }}>Cancel</Button>
+                  <Button className="bg-[#F97316] text-white hover:bg-[#EA580C]" onClick={handleUpdate}>
+                    {editingId ? 'Update Position' : 'Add Position'}
+                  </Button>
                 </div>
+              </div>
+
+              {/* Navigation */}
+              <div className="pt-8 flex justify-between items-center border-t border-[#F1F0F4] mt-12">
+                <Button variant="outline" onClick={() => navigate('/editor/personal')}>Back</Button>
+                <Button className="bg-[#F97316] text-white hover:bg-[#EA580C]" onClick={handleSaveAndNext}>
+                  Save & Next
+                  <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
               </div>
             </div>
 
@@ -125,40 +202,44 @@ export const ExperiencePage = () => {
                 </div>
                 <div className="bg-white rounded-sm shadow-2xl p-12 aspect-[1/1.414] border border-outline-variant/10 overflow-hidden">
                   <div className="space-y-10">
-                    <div className="border-b-2 border-primary pb-8">
+                    <div className="border-b-2 border-[#F97316] pb-8">
                       <h2 className="text-3xl font-black font-headline tracking-tighter uppercase">Experience</h2>
                     </div>
                     <div className="space-y-8">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-baseline">
-                          <h4 className="font-bold text-lg font-headline">Senior Creative Director</h4>
-                          <span className="text-xs font-bold text-on-surface-variant">2020 — Present</span>
+                      {cvData.experience.map(exp => (
+                        <div key={exp.id} className="space-y-2">
+                          <div className="flex justify-between items-baseline">
+                            <h4 className="font-bold text-lg font-headline">{exp.title || 'Untitled Role'}</h4>
+                            <span className="text-[10px] font-bold text-on-surface-variant">{exp.period}</span>
+                          </div>
+                          <p className="text-xs font-bold text-[#F97316] uppercase tracking-widest">{exp.company || 'Untitled Company'}</p>
+                          <p className="text-xs text-on-surface-variant leading-relaxed">{exp.description}</p>
                         </div>
-                        <p className="text-sm font-bold text-secondary uppercase tracking-widest">Apple Inc.</p>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">Leading the global brand architecture and design systems for next-generation hardware products. Managed a team of 25+ designers and researchers.</p>
-                      </div>
-                      <div className="space-y-2 opacity-50">
-                        <div className="flex justify-between items-baseline">
-                          <h4 className="font-bold text-lg font-headline">Design Lead</h4>
-                          <span className="text-xs font-bold text-on-surface-variant">2017 — 2019</span>
+                      ))}
+                      {cvData.experience.length === 0 && (
+                        <div className="space-y-4 opacity-20">
+                          <div className="h-4 w-3/4 bg-slate-200 rounded"></div>
+                          <div className="h-2 w-1/4 bg-slate-200 rounded"></div>
+                          <div className="space-y-2">
+                            <div className="h-2 w-full bg-slate-100 rounded"></div>
+                            <div className="h-2 w-full bg-slate-100 rounded"></div>
+                            <div className="h-2 w-2/3 bg-slate-100 rounded"></div>
+                          </div>
                         </div>
-                        <p className="text-sm font-bold text-secondary uppercase tracking-widest">Nike</p>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">Spearheaded the digital transformation of the Nike+ ecosystem, resulting in a 40% increase in user engagement.</p>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
                 
-                <Card className="p-6 bg-primary text-on-primary">
+                <Card className="p-6 bg-[#394457] text-white">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                      <div className="h-1 bg-[#F97316] w-[40%] rounded-l-full"></div>
-                      <Sparkles className="w-5 h-5" />
+                      <Sparkles className="w-5 h-5 text-[#F97316]" />
                     </div>
                     <div>
                       <h4 className="font-bold mb-1">AI Insight</h4>
-                      <p className="text-sm text-on-primary/70 leading-relaxed">
-                        "Using strong action verbs like 'Architected' or 'Spearheaded' at the start of your bullet points will improve your editorial score."
+                      <p className="text-sm text-white/70 leading-relaxed">
+                        "Your architectural impact is measured by metrics. Try adding results like 'Reduced overhead by 20%' to increase resonance."
                       </p>
                     </div>
                   </div>
@@ -170,7 +251,17 @@ export const ExperiencePage = () => {
   );
 };
 
-const ExperienceItem = ({ title, company, period, description, isActive }: { title: string; company: string; period: string; description: string; isActive?: boolean }) => (
+interface ExperienceItemProps {
+  title: string;
+  company: string;
+  period: string;
+  description: string;
+  isActive?: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+const ExperienceItem: React.FC<ExperienceItemProps> = ({ title, company, period, description, isActive, onEdit, onDelete }) => (
   <div className={cn(
     "bg-surface-container-lowest p-6 rounded-xl flex items-center gap-6 group border-2 transition-all cursor-pointer",
     isActive ? "border-[#F97316] shadow-lg" : "border-transparent hover:bg-surface-container-low"
@@ -178,7 +269,7 @@ const ExperienceItem = ({ title, company, period, description, isActive }: { tit
     <div className="text-outline cursor-grab active:cursor-grabbing">
       <GripVertical className="w-5 h-5" />
     </div>
-    <div className="flex-1">
+    <div className="flex-1" onClick={onEdit}>
       <div className="flex justify-between items-start mb-1">
         <h4 className="font-bold text-on-surface">{title}</h4>
         <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">{period}</span>
@@ -187,10 +278,10 @@ const ExperienceItem = ({ title, company, period, description, isActive }: { tit
       <p className="text-xs text-on-surface-variant line-clamp-1">{description}</p>
     </div>
     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <button className="p-2 text-on-surface-variant hover:text-secondary transition-colors">
+      <button className="p-2 text-on-surface-variant hover:text-[#F97316] transition-colors" onClick={onEdit}>
         <Edit3 className="w-4 h-4" />
       </button>
-      <button className="p-2 text-on-surface-variant hover:text-error transition-colors">
+      <button className="p-2 text-on-surface-variant hover:text-red-500 transition-colors" onClick={onDelete}>
         <Trash2 className="w-4 h-4" />
       </button>
     </div>

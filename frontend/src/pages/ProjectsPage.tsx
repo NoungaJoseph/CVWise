@@ -7,15 +7,64 @@ import {
   Trash2, 
   Sparkles,
   LayoutGrid,
-  List
+  List,
+  ArrowRight,
+  Edit3 as EditIcon
 } from 'lucide-react';
 import { DashboardLayout } from '@/src/components/layout';
 import { Button, Input, Card } from '@/src/components/ui';
 import { cn } from '@/src/lib/utils';
+import { useEditor, Project } from '@/src/lib/EditorContext';
+import { useNavigate } from 'react-router-dom';
 
 export const ProjectsPage = () => {
+  const { cvData, updateProjects, addProject, calculateProgress } = useEditor();
+  const navigate = useNavigate();
+  const progress = calculateProgress();
+  
+  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [formData, setFormData] = React.useState<Partial<Project>>({
+    title: '',
+    role: '',
+    date: '',
+    description: '',
+    link: ''
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdate = () => {
+    if (editingId) {
+      updateProjects(cvData.projects.map(p => p.id === editingId ? { ...p, ...formData } as Project : p));
+      setEditingId(null);
+      setFormData({ title: '', role: '', date: '', description: '', link: '' });
+    } else {
+      const newProj: Project = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: formData.title || '',
+        role: formData.role || '',
+        date: formData.date || '',
+        description: formData.description || '',
+        link: formData.link || ''
+      };
+      addProject(newProj);
+      setFormData({ title: '', role: '', date: '', description: '', link: '' });
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    updateProjects(cvData.projects.filter(p => p.id !== id));
+  };
+
+  const handleFinish = () => {
+    navigate('/preview');
+  };
+
   return (
-    <DashboardLayout cvTitle="Resume Architect" cvSub="Editorial Mode">
+    <DashboardLayout cvTitle={cvData.title} cvSub="Editorial Mode">
       <div className="max-w-6xl mx-auto px-4 md:px-12 py-6 md:py-10">
             <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
               <div>
@@ -24,14 +73,17 @@ export const ProjectsPage = () => {
               </div>
               <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                 <div className="bg-surface-container-high p-1 rounded-lg flex">
-                  <button className="p-2 bg-surface-container-lowest rounded-md shadow-sm text-primary">
+                  <button className="p-2 bg-surface-container-lowest rounded-md shadow-sm text-[#F97316]">
                     <LayoutGrid className="w-4 h-4" />
                   </button>
                   <button className="p-2 text-on-surface-variant">
                     <List className="w-4 h-4" />
                   </button>
                 </div>
-                <Button variant="gradient" className="flex items-center gap-2">
+                <Button 
+                  onClick={() => { setEditingId(null); setFormData({ title: '', role: '', date: '', description: '', link: '' }); }}
+                  className="bg-[#F97316] text-white hover:bg-[#EA580C] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm order-first md:order-last"
+                >
                   <Plus className="w-4 h-4" />
                   Add Project
                 </Button>
@@ -39,30 +91,24 @@ export const ProjectsPage = () => {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <ProjectCard 
-                title="Apple Vision Pro Launch"
-                role="Design Lead"
-                date="2023"
-                description="Architected the spatial design language and core interface paradigms for the first generation hardware."
-                image="https://picsum.photos/seed/proj1/600/400"
-              />
-              <ProjectCard 
-                title="Nike+ Digital Transformation"
-                role="Creative Director"
-                date="2021"
-                description="Reimagined the global digital ecosystem, connecting physical products with immersive digital experiences."
-                image="https://picsum.photos/seed/proj2/600/400"
-              />
-              <ProjectCard 
-                title="Airbnb Luxe Rebrand"
-                role="Senior Designer"
-                date="2018"
-                description="Developed the high-end visual identity and editorial strategy for Airbnb's luxury listing tier."
-                image="https://picsum.photos/seed/proj3/600/400"
-              />
+              {cvData.projects.map(proj => (
+                <ProjectCard 
+                  key={proj.id}
+                  title={proj.title}
+                  role={proj.role}
+                  date={proj.date}
+                  description={proj.description}
+                  image={`https://picsum.photos/seed/${proj.id}/600/400`}
+                  onEdit={() => { setEditingId(proj.id); setFormData(proj); }}
+                  onDelete={() => handleDelete(proj.id)}
+                />
+              ))}
               
               {/* Add New Placeholder */}
-              <div className="group border-2 border-dashed border-outline-variant/30 rounded-2xl flex flex-col items-center justify-center p-12 text-center hover:bg-surface-container-low transition-all cursor-pointer">
+              <div 
+                onClick={() => { setEditingId(null); setFormData({ title: '', role: '', date: '', description: '', link: '' }); }}
+                className="group border-2 border-dashed border-outline-variant/30 rounded-2xl flex flex-col items-center justify-center p-12 text-center hover:bg-surface-container-low transition-all cursor-pointer"
+              >
                 <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <Plus className="w-8 h-8 text-on-surface-variant" />
                 </div>
@@ -71,32 +117,53 @@ export const ProjectsPage = () => {
               </div>
             </div>
 
-            {/* Active Editor Form (Hidden by default, shown when editing/adding) */}
+            {/* Active Editor Form */}
             <div className="mt-20 pt-20 border-t border-outline-variant/10">
               <div className="max-w-3xl">
                 <div className="mb-8">
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F97316] mb-1">Step 5 of 5</p>
-                  <div className="w-full h-1 bg-[#F97316] rounded-full mb-6"></div>
-                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-outline">Project Details</h3>
+                  <div className="w-full h-1 bg-[#E1E2E4] rounded-full mb-6">
+                    <div className="h-full bg-[#F97316]" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-outline">
+                    {editingId ? 'Edit Project' : 'New Project'}
+                  </h3>
                 </div>
-                <form className="space-y-8">
+                <div className="space-y-8">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Project Name</label>
-                    <Input placeholder="e.g. Global Brand Reimagining" />
+                    <Input 
+                      name="title"
+                      value={formData.title} 
+                      onChange={handleInputChange}
+                      placeholder="e.g. Global Brand Reimagining" 
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-on-surface-variant ml-1">Your Role</label>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                        <Input className="pl-12" placeholder="e.g. Lead Architect" />
+                        <Input 
+                          name="role"
+                          className="pl-12" 
+                          value={formData.role} 
+                          onChange={handleInputChange}
+                          placeholder="e.g. Lead Architect" 
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-on-surface-variant ml-1">Completion Date</label>
                       <div className="relative">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                        <Input className="pl-12" placeholder="YYYY" />
+                        <Input 
+                          name="date"
+                          className="pl-12" 
+                          value={formData.date} 
+                          onChange={handleInputChange}
+                          placeholder="YYYY" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -104,7 +171,13 @@ export const ProjectsPage = () => {
                     <label className="text-sm font-bold text-on-surface-variant ml-1">Project Link (Optional)</label>
                     <div className="relative">
                       <ExternalLink className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-outline" />
-                      <Input className="pl-12" placeholder="https://project-url.com" />
+                      <Input 
+                        name="link"
+                        className="pl-12" 
+                        value={formData.link} 
+                        onChange={handleInputChange}
+                        placeholder="https://project-url.com" 
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -116,15 +189,29 @@ export const ProjectsPage = () => {
                       </button>
                     </div>
                     <textarea 
-                      className="w-full bg-surface-container-highest border-none px-4 py-4 rounded-lg text-on-surface placeholder:text-outline focus:ring-0 focus:bg-surface-container-lowest transition-all min-h-[160px] resize-none"
+                      name="description"
+                      className="w-full bg-surface-container-highest border-none px-4 py-4 rounded-lg text-on-surface placeholder:text-outline focus:ring-1 focus:ring-[#F97316]/20 focus:bg-surface-container-lowest transition-all min-h-[160px] resize-none"
+                      value={formData.description}
+                      onChange={handleInputChange}
                       placeholder="Describe the project scope, your contribution, and the measurable outcomes..."
                     ></textarea>
                   </div>
                   <div className="flex justify-end gap-4">
-                    <Button variant="ghost">Discard</Button>
-                    <Button variant="primary">Save Project</Button>
+                    <Button variant="outline" onClick={() => { setEditingId(null); setFormData({ title: '', role: '', date: '', description: '', link: '' }); }}>Cancel</Button>
+                    <Button className="bg-[#F97316] text-white hover:bg-[#EA580C]" onClick={handleUpdate}>
+                      {editingId ? 'Update Project' : 'Save Project'}
+                    </Button>
                   </div>
-                </form>
+                </div>
+
+                {/* Final Navigation */}
+                <div className="pt-8 flex justify-between items-center border-t border-[#F1F0F4] mt-12">
+                  <Button variant="outline" onClick={() => navigate('/editor/skills')}>Back</Button>
+                  <Button className="bg-[#F97316] text-white hover:bg-[#EA580C]" onClick={handleFinish}>
+                    Complete CV
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -132,8 +219,18 @@ export const ProjectsPage = () => {
   );
 };
 
-const ProjectCard = ({ title, role, date, description, image }: { title: string; role: string; date: string; description: string; image: string }) => (
-  <Card className="overflow-hidden group flex flex-col h-full">
+interface ProjectCardProps {
+  title: string;
+  role: string;
+  date: string;
+  description: string;
+  image: string;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+const ProjectCard: React.FC<ProjectCardProps> = ({ title, role, date, description, image, onEdit, onDelete }) => (
+  <Card className="overflow-hidden group flex flex-col h-full border border-outline-variant/5 hover:border-[#F97316]/30 transition-all">
     <div className="aspect-video relative overflow-hidden">
       <img 
         src={image} 
@@ -142,32 +239,28 @@ const ProjectCard = ({ title, role, date, description, image }: { title: string;
         referrerPolicy="no-referrer"
       />
       <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-secondary shadow-sm">
-          <Edit3 className="w-4 h-4" />
+        <button onClick={onEdit} className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-[#F97316] shadow-sm">
+          <EditIcon className="w-4 h-4" />
         </button>
-        <button className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-error shadow-sm">
+        <button onClick={onDelete} className="w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center text-on-surface-variant hover:text-red-500 shadow-sm">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
     </div>
-    <div className="p-6 flex-1 flex flex-col">
+    <div className="p-6 flex-1 flex flex-col" onClick={onEdit} style={{ cursor: 'pointer' }}>
       <div className="flex justify-between items-start mb-2">
-        <h4 className="font-bold text-on-surface font-headline leading-tight">{title}</h4>
+        <h4 className="font-bold text-on-surface font-headline leading-tight">{title || 'Untitled Project'}</h4>
         <span className="text-[10px] font-bold text-outline uppercase tracking-widest">{date}</span>
       </div>
-      <p className="text-xs text-secondary font-bold uppercase tracking-widest mb-4">{role}</p>
+      <p className="text-xs text-[#F97316] font-bold uppercase tracking-widest mb-4">{role || 'No Role'}</p>
       <p className="text-sm text-on-surface-variant leading-relaxed line-clamp-3 mb-6">
         {description}
       </p>
       <div className="mt-auto pt-4 border-t border-outline-variant/10">
-        <button className="text-xs font-bold text-on-surface flex items-center gap-1 hover:text-secondary transition-colors">
+        <button className="text-xs font-bold text-on-surface flex items-center gap-1 hover:text-[#F97316] transition-colors">
           View Details <ExternalLink className="w-3 h-3" />
         </button>
       </div>
     </div>
   </Card>
-);
-
-const Edit3 = ({ className }: { className?: string }) => (
-  <span className={cn("material-symbols-outlined", className)}>edit</span>
 );

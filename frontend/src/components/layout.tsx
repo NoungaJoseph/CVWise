@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -14,7 +14,8 @@ import {
   BrainCircuit,
   FolderKanban,
   Menu,
-  X 
+  X,
+  Palette
 } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { Button } from './ui';
@@ -22,6 +23,15 @@ import { useAuth } from '../lib/AuthContext';
 
 export const TopNavBar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
   const { isAuthenticated, logout } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    if (isAuthenticated && (location.pathname === '/dashboard' || location.pathname.startsWith('/editor'))) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <header className="fixed top-0 w-full z-50 bg-[#F8F9FA] border-b border-outline-variant/10">
       <div className="flex justify-between items-center px-4 md:px-8 py-4 max-w-screen-2xl mx-auto">
@@ -34,7 +44,7 @@ export const TopNavBar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
               <Menu className="w-6 h-6 text-[#191C1E]" />
             </button>
           )}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to={isAuthenticated ? "/dashboard" : "/"} onClick={handleLogoClick} className="flex items-center gap-2 group">
             <img src="/images/logo.png" alt="CVWise" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform" />
             <span className="text-xl md:text-2xl font-black tracking-tight text-[#191C1E] font-headline">CVWise</span>
           </Link>
@@ -50,10 +60,19 @@ export const TopNavBar = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         <div className="flex items-center gap-3 md:gap-4">
           {isAuthenticated ? (
             <>
+              {location.pathname.startsWith('/editor') && (
+                <Button 
+                  onClick={() => navigate('/preview')} 
+                  variant="outline"
+                  className="hidden md:flex items-center gap-2 border-[#F97316] text-[#F97316] hover:bg-[#F97316]/5 font-bold"
+                >
+                  <Download className="w-4 h-4" />
+                  Download PDF
+                </Button>
+              )}
               <Link to="/upgrade" className="hidden sm:block text-sm font-medium text-[#44474E] hover:text-[#191C1E] transition-colors">Upgrade</Link>
               <Button onClick={logout} className="bg-[#394457] text-white hover:bg-[#2c3645] px-4 md:px-6 py-2 md:py-2.5 rounded-lg font-bold text-xs md:text-sm shadow-sm transition-all duration-200">
-                <span className="hidden sm:inline">Download PDF</span>
-                <Download className="w-4 h-4 sm:hidden" />
+                <span>Logout</span>
               </Button>
             </>
           ) : (
@@ -97,6 +116,7 @@ export const SideNavBar = ({ isMobileOpen, onMobileClose, cvTitle = "CV Architec
     { icon: GraduationCap, label: 'Education', path: '/editor/education' },
     { icon: Settings, label: 'Skills', path: '/editor/skills' },
     { icon: FolderKanban, label: 'Projects', path: '/editor/projects' },
+    { icon: Palette, label: 'Style Architecture', path: '/editor/styling' },
     { icon: FileText, label: 'My CVs', path: '/my-cvs' },
   ];
 
