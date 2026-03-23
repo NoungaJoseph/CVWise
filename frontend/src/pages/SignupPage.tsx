@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowRight, Linkedin } from 'lucide-react';
 import { Button, Input, Card } from '@/src/components/ui';
 import { useAuth } from '../lib/AuthContext';
 
 export const SignupPage = () => {
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
-    login();
-    const from = location.state?.from?.pathname || '/dashboard';
-    navigate(from, { replace: true });
+    signup(name, email);
+    // Always redirect to onboarding after signup
+    navigate('/onboarding', { replace: true });
   };
 
   return (
@@ -38,18 +41,18 @@ export const SignupPage = () => {
           <form className="space-y-6" onSubmit={handleSignup}>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="name">Full Name</label>
-              <Input id="name" placeholder="Alexander Hamilton" type="text" />
+              <Input id="name" placeholder="Alexander Hamilton" type="text" value={name} onChange={e => setName(e.target.value)} required />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="email">Email Address</label>
-              <Input id="email" placeholder="alexander@editorial.com" type="email" />
+              <Input id="email" placeholder="alexander@editorial.com" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="password">Password</label>
               <div className="relative">
-                <Input id="password" placeholder="••••••••" type="password" />
+                <Input id="password" placeholder="••••••••" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
                 <button className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-secondary transition-colors" type="button">
                   <span className="material-symbols-outlined text-[20px]">visibility</span>
                 </button>
@@ -57,9 +60,9 @@ export const SignupPage = () => {
             </div>
 
             <div className="flex items-start gap-3 pt-2">
-              <input type="checkbox" id="terms" className="mt-1 w-4 h-4 rounded border-outline-variant text-[#F97316] focus:ring-[#F97316]/20" />
+              <input type="checkbox" id="terms" required className="mt-1 w-4 h-4 rounded border-outline-variant text-[#F97316] focus:ring-[#F97316]/20" />
               <label className="text-xs text-on-surface-variant leading-relaxed" htmlFor="terms">
-                I agree to the <a className="text-[#F97316] font-semibold hover:underline" href="#">Terms of Service</a> and <a className="text-[#F97316] font-semibold hover:underline" href="#">Privacy Policy</a>.
+                I agree to the <Link className="text-[#F97316] font-semibold hover:underline" to="/terms">Terms of Service</Link> and <Link className="text-[#F97316] font-semibold hover:underline" to="/privacy">Privacy Policy</Link>.
               </label>
             </div>
 
@@ -109,7 +112,7 @@ export const SignupPage = () => {
         </div>
         
         <div className="text-center mt-12">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-outline">© 2024 CVWise</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-outline">© 2025 CVWise</p>
         </div>
       </div>
     </main>

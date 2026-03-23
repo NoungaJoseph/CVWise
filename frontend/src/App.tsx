@@ -26,6 +26,7 @@ import { SupportPage } from './pages/SupportPage';
 import { PrivacyPolicyPage, TermsOfServicePage, CookiePolicyPage, ContactUsPage } from './pages/LegalPages';
 import { MyCVsPage } from './pages/MyCVsPage';
 import { NewSectionPage } from './pages/NewSectionPage';
+import { OnboardingPage } from './pages/OnboardingPage';
 import { AuthProvider } from './lib/AuthContext';
 import { EditorProvider } from './lib/EditorContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -47,7 +48,10 @@ export default function App() {
             <Route path="/terms" element={<TermsOfServicePage />} />
             <Route path="/cookies" element={<CookiePolicyPage />} />
             <Route path="/contact" element={<ContactUsPage />} />
-            
+
+            {/* Onboarding (after signup) */}
+            <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
+
             {/* User Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
             <Route path="/my-cvs" element={<ProtectedRoute><MyCVsPage /></ProtectedRoute>} />
@@ -55,7 +59,7 @@ export default function App() {
             <Route path="/analytics" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
-            
+
             {/* Editor Protected Routes */}
             <Route path="/editor/personal" element={<ProtectedRoute><PersonalInfoPage /></ProtectedRoute>} />
             <Route path="/editor/experience" element={<ProtectedRoute><ExperiencePage /></ProtectedRoute>} />
@@ -65,7 +69,7 @@ export default function App() {
             <Route path="/editor/styling" element={<ProtectedRoute><StylingPage /></ProtectedRoute>} />
             <Route path="/preview" element={<ProtectedRoute><PreviewPage /></ProtectedRoute>} />
             <Route path="/editor/new-section" element={<ProtectedRoute><NewSectionPage /></ProtectedRoute>} />
-            
+
             {/* Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

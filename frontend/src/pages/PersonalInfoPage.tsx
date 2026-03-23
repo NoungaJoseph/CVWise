@@ -11,16 +11,36 @@ import { DashboardLayout } from '@/src/components/layout';
 import { Button, Input, Card } from '@/src/components/ui';
 
 import { useEditor } from '@/src/lib/EditorContext';
+import { useAuth } from '@/src/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export const PersonalInfoPage = () => {
   const { cvData, updatePersonalInfo, calculateProgress } = useEditor();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isEditingSocials, setIsEditingSocials] = React.useState(false);
+  const [autoFilled, setAutoFilled] = React.useState(false);
 
   const personalInfo = cvData.personalInfo;
   const progress = calculateProgress();
+
+  // Auto-fill from profile if fields are empty
+  const handleAutoFill = () => {
+    if (!user) return;
+    const nameParts = (user.name || '').trim().split(' ');
+    updatePersonalInfo({
+      firstName: nameParts[0] || personalInfo.firstName,
+      lastName: nameParts.slice(1).join(' ') || personalInfo.lastName,
+      email: user.email || personalInfo.email,
+      phone: user.phone || personalInfo.phone,
+      title: user.title || personalInfo.title,
+      location: user.location || personalInfo.location,
+      linkedin: user.linkedin || personalInfo.linkedin,
+      summary: user.summary || personalInfo.summary,
+    });
+    setAutoFilled(true);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -46,14 +66,25 @@ export const PersonalInfoPage = () => {
     <DashboardLayout cvTitle={cvData.title} cvSub={personalInfo.title || "Editorial Mode"}>
       <div className="max-w-[1000px] px-4 md:px-12 py-6 md:py-10">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
               <div className="space-y-1">
                 <h1 className="text-2xl md:text-[32px] font-bold text-[#191C1E] font-headline tracking-tight">Personal Information</h1>
                 <p className="text-[#44474E] text-sm md:text-[15px] font-medium">Let's start with the basics. This information will appear at the top of your CV.</p>
               </div>
-              <div className="text-left md:text-right flex flex-col items-start md:items-end">
-                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F97316] mb-1">Step 1 of 5</p>
-                <p className="text-lg font-bold text-[#191C1E] font-headline">{Math.round(progress)}% Complete</p>
+              <div className="flex flex-col items-start md:items-end gap-3">
+                <div className="text-left md:text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#F97316] mb-1">Step 1 of 5</p>
+                  <p className="text-lg font-bold text-[#191C1E] font-headline">{Math.round(progress)}% Complete</p>
+                </div>
+                {user && (
+                  <button
+                    onClick={handleAutoFill}
+                    className="flex items-center gap-2 text-xs font-bold text-[#F97316] hover:text-[#EA580C] transition-colors bg-[#F97316]/10 hover:bg-[#F97316]/20 px-3 py-1.5 rounded-lg"
+                  >
+                    <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+                    {autoFilled ? '✓ Profile Applied' : 'Auto-fill from Profile'}
+                  </button>
+                )}
               </div>
             </div>
 

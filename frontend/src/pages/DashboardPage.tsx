@@ -1,16 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/src/components/layout';
 import { Button, Card } from '@/src/components/ui';
 import { cn } from '@/src/lib/utils';
-import { Lightbulb, Maximize2 } from 'lucide-react';
+import { Lightbulb, Maximize2, X, Loader2 } from 'lucide-react';
 import { useEditor } from '@/src/lib/EditorContext';
 import { useNavigate } from 'react-router-dom';
+import { GoogleGenAI } from '@google/genai';
 
 export const DashboardPage = () => {
   const { cvData, calculateProgress } = useEditor();
   const navigate = useNavigate();
   const progress = calculateProgress();
-  
+  const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+
+  const handleAIPolish = async () => {
+    setIsAiLoading(true);
+    setShowAiModal(true);
+    try {
+      const apiKey = process.env.GEMINI_API_KEY || '';
+      if (!apiKey) {
+        setAiSuggestion('⚠️ AI Polish requires a Gemini API key. Add GEMINI_API_KEY to your .env file to enable this feature.');
+        return;
+      }
+      const ai = new GoogleGenAI({ apiKey });
+      const cvSummary = `Name: ${cvData.personalInfo.firstName} ${cvData.personalInfo.lastName}, Title: ${cvData.personalInfo.title}, Experience entries: ${cvData.experience.length}, Skills: ${cvData.skills.map(s=>s.name).join(', ')}, Summary: ${cvData.personalInfo.summary?.slice(0, 200)}`;
+      const result = await ai.models.generateContent({
+        model: 'gemini-2.0-flash',
+        contents: `You are a professional CV coach. Analyze this CV and give 3-5 specific, actionable improvement suggestions. Be concise and practical. CV data: ${cvSummary}`,
+      });
+      setAiSuggestion(result.text || 'No suggestions at this time.');
+    } catch (err) {
+      setAiSuggestion('AI analysis failed. Please check your API key or try again later.');
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const sections = [
     { 
       id: 'personal',
@@ -50,6 +77,7 @@ export const DashboardPage = () => {
   ];
 
   return (
+    <>
     <DashboardLayout cvTitle={cvData.title} cvSub="Editorial Mode">
       <div className="max-w-7xl mx-auto px-4 md:px-12 py-6 md:py-10">
         <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -57,9 +85,13 @@ export const DashboardPage = () => {
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-on-surface mb-2 font-headline">Editor Home</h1>
             <p className="text-on-surface-variant text-sm md:text-base">Measuring the market resonance of your professional architecture with CVWise.</p>
           </div>
-          <Button className="w-full md:w-auto bg-[#F97316] text-white hover:bg-[#EA580C] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm order-first md:order-last">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
-            AI Polish
+          <Button
+            onClick={handleAIPolish}
+            disabled={isAiLoading}
+            className="w-full md:w-auto bg-[#F97316] text-white hover:bg-[#EA580C] px-6 py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-sm order-first md:order-last"
+          >
+            {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>}
+            {isAiLoading ? 'Analyzing...' : 'AI Polish'}
           </Button>
         </header>
 
@@ -207,6 +239,51 @@ export const DashboardPage = () => {
         </div>
       </div>
     </DashboardLayout>
+
+    {/* AI Suggestions Modal */}
+    {showAiModal && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end md:items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto">
+          <div className="flex items-center justify-between p-8 border-b border-[#F1F0F4]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl text-[#F97316]" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span>
+              </div>
+              <div>
+                <h3 className="font-black text-[#191C1E] font-headline">AI Architect Insight</h3>
+                <p className="text-xs text-[#44474E]">Powered by Gemini</p>
+              </div>
+            </div>
+            <button onClick={() => setShowAiModal(false)} className="w-9 h-9 rounded-xl bg-[#F1F0F4] flex items-center justify-center hover:bg-[#E1E2E4] transition-colors">
+              <X className="w-4 h-4 text-[#191C1E]" />
+            </button>
+          </div>
+          <div className="p-8">
+            {isAiLoading ? (
+              <div className="flex flex-col items-center gap-4 py-8">
+                <Loader2 className="w-8 h-8 text-[#F97316] animate-spin" />
+                <p className="text-[#44474E] font-medium">Analyzing your CV with AI...</p>
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none">
+                <p className="text-[#191C1E] leading-relaxed whitespace-pre-wrap text-sm">{aiSuggestion}</p>
+              </div>
+            )}
+          </div>
+          {!isAiLoading && (
+            <div className="p-8 pt-0 flex gap-3">
+              <Button onClick={() => setShowAiModal(false)} variant="outline" className="flex-1 border-[#E1E2E4]">
+                Close
+              </Button>
+              <Button onClick={() => navigate('/editor/personal')} className="flex-1 bg-[#F97316] text-white hover:bg-[#EA580C]">
+                Go to Editor
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

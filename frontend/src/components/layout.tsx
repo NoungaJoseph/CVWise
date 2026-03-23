@@ -114,7 +114,7 @@ export const SideNavBar = ({ isMobileOpen, onMobileClose, cvTitle = "CV Architec
     { icon: User, label: 'Personal Info', path: '/editor/personal' },
     { icon: Briefcase, label: 'Experience', path: '/editor/experience' },
     { icon: GraduationCap, label: 'Education', path: '/editor/education' },
-    { icon: Settings, label: 'Skills', path: '/editor/skills' },
+    { icon: BrainCircuit, label: 'Skills', path: '/editor/skills' },
     { icon: FolderKanban, label: 'Projects', path: '/editor/projects' },
     { icon: Palette, label: 'Style Architecture', path: '/editor/styling' },
     { icon: FileText, label: 'My CVs', path: '/my-cvs' },
@@ -200,7 +200,7 @@ export const Footer = () => (
           <img src="/images/logo.png" alt="CVWise" className="w-6 h-6 object-contain" />
           <span className="text-xl font-black text-[#191C1E] font-headline tracking-tight">CVWise</span>
         </div>
-        <p>© 2024 CVWise. Smarter CVs. Better Opportunities.</p>
+        <p>© 2025 CVWise. Smarter CVs. Better Opportunities.</p>
       </div>
       <div className="flex gap-8 font-medium flex-wrap justify-center md:justify-start">
         <Link to="/privacy" className="hover:text-[#191C1E] transition-colors">Privacy Policy</Link>
