@@ -22,7 +22,7 @@ async function generatePDFFromData(cvData) {
     const margin = 15;
     const contentWidth = pageWidth - 2 * margin;
 
-    const { personalInfo, experience, education, skills, projects, style } = cvData;
+    const { personalInfo, experience, education, skills, projects, languages, certifications, awards, references, style } = cvData;
 
     // Helper function to add text
     function addText(text, size, isBold, color = [0, 0, 0], maxWidth = contentWidth) {
@@ -126,6 +126,51 @@ async function generatePDFFromData(cvData) {
         addText(`${proj.title}`, 11, true);
         addText(`${proj.role} | ${proj.date}`, 10, false, [100, 100, 100]);
         addText(proj.description || '', 9, false, [68, 68, 68], contentWidth);
+        yPosition += 3;
+      }
+    }
+
+    // Languages
+    if (languages && languages.length > 0) {
+      addText('LANGUAGES', 12, true, primaryColorRgb);
+      for (const lang of languages) {
+        addText(`${lang.name}: ${lang.proficiency}`, 10, false, [68, 68, 68], contentWidth);
+      }
+      yPosition += 5;
+    }
+
+    // Certifications
+    if (certifications && certifications.length > 0) {
+      addText('CERTIFICATIONS', 12, true, primaryColorRgb);
+      for (const cert of certifications) {
+        addText(`${cert.name}`, 11, true);
+        addText(`${cert.issuer} | ${cert.date}`, 10, false, [100, 100, 100]);
+        yPosition += 3;
+      }
+      yPosition += 5;
+    }
+
+    // Awards
+    if (awards && awards.length > 0) {
+      addText('AWARDS & RECOGNITION', 12, true, primaryColorRgb);
+      for (const award of awards) {
+        addText(`${award.title}`, 11, true);
+        addText(`${award.issuer} | ${award.date}`, 10, false, [100, 100, 100]);
+        if (award.description) {
+          addText(award.description, 9, false, [68, 68, 68], contentWidth);
+        }
+        yPosition += 3;
+      }
+      yPosition += 5;
+    }
+
+    // References
+    if (references && references.length > 0) {
+      addText('PROFESSIONAL REFERENCES', 12, true, primaryColorRgb);
+      for (const ref of references) {
+        addText(`${ref.name}`, 11, true);
+        addText(`${ref.position}${ref.company ? ' | ' + ref.company : ''}`, 10, false, [100, 100, 100]);
+        addText(`${ref.email}${ref.phone ? ' | ' + ref.phone : ''}`, 9, false, [68, 68, 68], contentWidth);
         yPosition += 3;
       }
     }

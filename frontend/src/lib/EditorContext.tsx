@@ -50,6 +50,38 @@ export interface Project {
   image?: string;
 }
 
+export interface Language {
+  id: string;
+  name: string;
+  proficiency: 'Native' | 'Fluent' | 'Intermediate' | 'Basic';
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  date: string;
+  expiryDate?: string;
+  url?: string;
+}
+
+export interface Award {
+  id: string;
+  title: string;
+  issuer: string;
+  date: string;
+  description?: string;
+}
+
+export interface Reference {
+  id: string;
+  name: string;
+  position: string;
+  company: string;
+  email: string;
+  phone?: string;
+}
+
 export interface StyleSettings {
   primaryColor: string;
   fontFamily: string;
@@ -65,6 +97,10 @@ export interface CVData {
   education: Education[];
   skills: Skill[];
   projects: Project[];
+  languages: Language[];
+  certifications: Certification[];
+  awards: Award[];
+  references: Reference[];
   style: StyleSettings;
 }
 
@@ -85,6 +121,10 @@ const DEFAULT_DATA: CVData = {
   education: [],
   skills: [],
   projects: [],
+  languages: [],
+  certifications: [],
+  awards: [],
+  references: [],
   style: {
     primaryColor: '#F97316',
     fontFamily: 'Inter',
@@ -104,6 +144,14 @@ interface EditorContextType {
   addSkill: (skill: Skill) => void;
   updateProjects: (projects: Project[]) => void;
   addProject: (project: Project) => void;
+  updateLanguages: (languages: Language[]) => void;
+  addLanguage: (language: Language) => void;
+  updateCertifications: (certifications: Certification[]) => void;
+  addCertification: (certification: Certification) => void;
+  updateAwards: (awards: Award[]) => void;
+  addAward: (award: Award) => void;
+  updateReferences: (references: Reference[]) => void;
+  addReference: (reference: Reference) => void;
   updateStyle: (style: Partial<StyleSettings>) => void;
   setTemplate: (templateId: string) => void;
   calculateProgress: () => number;
@@ -160,6 +208,38 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setCvData(prev => ({ ...prev, projects: [...prev.projects, project] }));
   };
 
+  const updateLanguages = (languages: Language[]) => {
+    setCvData(prev => ({ ...prev, languages }));
+  };
+
+  const addLanguage = (language: Language) => {
+    setCvData(prev => ({ ...prev, languages: [...prev.languages, language] }));
+  };
+
+  const updateCertifications = (certifications: Certification[]) => {
+    setCvData(prev => ({ ...prev, certifications }));
+  };
+
+  const addCertification = (certification: Certification) => {
+    setCvData(prev => ({ ...prev, certifications: [...prev.certifications, certification] }));
+  };
+
+  const updateAwards = (awards: Award[]) => {
+    setCvData(prev => ({ ...prev, awards }));
+  };
+
+  const addAward = (award: Award) => {
+    setCvData(prev => ({ ...prev, awards: [...prev.awards, award] }));
+  };
+
+  const updateReferences = (references: Reference[]) => {
+    setCvData(prev => ({ ...prev, references }));
+  };
+
+  const addReference = (reference: Reference) => {
+    setCvData(prev => ({ ...prev, references: [...prev.references, reference] }));
+  };
+
   const updateStyle = (style: Partial<StyleSettings>) => {
     setCvData(prev => ({ ...prev, style: { ...prev.style, ...style } }));
   };
@@ -190,6 +270,14 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       addSkill,
       updateProjects,
       addProject,
+      updateLanguages,
+      addLanguage,
+      updateCertifications,
+      addCertification,
+      updateAwards,
+      addAward,
+      updateReferences,
+      addReference,
       updateStyle,
       setTemplate,
       calculateProgress

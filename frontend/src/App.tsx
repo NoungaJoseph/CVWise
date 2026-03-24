@@ -23,6 +23,10 @@ import { UpgradePage } from './pages/UpgradePage';
 import { EducationPage } from './pages/EducationPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { SupportPage } from './pages/SupportPage';
+import { LanguagesPage } from './pages/LanguagesPage';
+import { CertificationsPage } from './pages/CertificationsPage';
+import { AwardsPage } from './pages/AwardsPage';
+import { ReferencesPage } from './pages/ReferencesPage';
 import { PrivacyPolicyPage, TermsOfServicePage, CookiePolicyPage, ContactUsPage } from './pages/LegalPages';
 import { MyCVsPage } from './pages/MyCVsPage';
 import { NewSectionPage } from './pages/NewSectionPage';
@@ -65,6 +69,10 @@ export default function App() {
             <Route path="/editor/experience" element={<ProtectedRoute><ExperiencePage /></ProtectedRoute>} />
             <Route path="/editor/education" element={<ProtectedRoute><EducationPage /></ProtectedRoute>} />
             <Route path="/editor/skills" element={<ProtectedRoute><SkillsPage /></ProtectedRoute>} />
+            <Route path="/editor/languages" element={<ProtectedRoute><LanguagesPage /></ProtectedRoute>} />
+            <Route path="/editor/certifications" element={<ProtectedRoute><CertificationsPage /></ProtectedRoute>} />
+            <Route path="/editor/awards" element={<ProtectedRoute><AwardsPage /></ProtectedRoute>} />
+            <Route path="/editor/references" element={<ProtectedRoute><ReferencesPage /></ProtectedRoute>} />
             <Route path="/editor/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
             <Route path="/editor/styling" element={<ProtectedRoute><StylingPage /></ProtectedRoute>} />
             <Route path="/preview" element={<ProtectedRoute><PreviewPage /></ProtectedRoute>} />
