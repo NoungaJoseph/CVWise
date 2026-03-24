@@ -1,23 +1,48 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowRight, Linkedin } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import { Button, Input, Card } from '@/src/components/ui';
 import { useAuth } from '../lib/AuthContext';
 
 export const SignupPage = () => {
-  const { signup } = useAuth();
+  const { signup, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [localError, setLocalError] = useState('');
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    signup(name, email);
-    // Always redirect to onboarding after signup
-    navigate('/onboarding', { replace: true });
+    setLocalError('');
+    clearError();
+
+    if (!firstName || !lastName || !email || !password) {
+      setLocalError('Please fill in all fields');
+      return;
+    }
+
+    if (!agreeTerms) {
+      setLocalError('Please agree to the Terms of Service and Privacy Policy');
+      return;
+    }
+
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      await signup(firstName, lastName, email, password);
+      navigate('/onboarding', { replace: true });
+    } catch (err) {
+      setLocalError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
+    }
   };
+
+  const displayError = localError || error;
 
   return (
     <main className="min-h-screen flex items-center justify-center p-6 relative bg-background overflow-hidden">
@@ -38,37 +63,97 @@ export const SignupPage = () => {
             <p className="text-on-surface-variant text-sm font-medium">Join 10k+ executives building with CVWise.</p>
           </header>
           
+          {displayError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm font-medium">{displayError}</p>
+            </div>
+          )}
+          
           <form className="space-y-6" onSubmit={handleSignup}>
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="name">Full Name</label>
-              <Input id="name" placeholder="Alexander Hamilton" type="text" value={name} onChange={e => setName(e.target.value)} required />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="firstName">First Name</label>
+                <Input 
+                  id="firstName" 
+                  placeholder="Alexander" 
+                  type="text" 
+                  value={firstName} 
+                  onChange={e => setFirstName(e.target.value)} 
+                  disabled={isLoading}
+                  required 
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="lastName">Last Name</label>
+                <Input 
+                  id="lastName" 
+                  placeholder="Hamilton" 
+                  type="text" 
+                  value={lastName} 
+                  onChange={e => setLastName(e.target.value)} 
+                  disabled={isLoading}
+                  required 
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="email">Email Address</label>
-              <Input id="email" placeholder="alexander@editorial.com" type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+              <Input 
+                id="email" 
+                placeholder="alexander@editorial.com" 
+                type="email" 
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                disabled={isLoading}
+                required 
+              />
             </div>
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider" htmlFor="password">Password</label>
-              <div className="relative">
-                <Input id="password" placeholder="••••••••" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-secondary transition-colors" type="button">
-                  <span className="material-symbols-outlined text-[20px]">visibility</span>
-                </button>
-              </div>
+              <Input 
+                id="password" 
+                placeholder="••••••••" 
+                type="password" 
+                value={password} 
+                onChange={e => setPassword(e.target.value)} 
+                disabled={isLoading}
+                required 
+              />
+              <p className="text-xs text-on-surface-variant">Must be at least 6 characters</p>
             </div>
 
             <div className="flex items-start gap-3 pt-2">
-              <input type="checkbox" id="terms" required className="mt-1 w-4 h-4 rounded border-outline-variant text-[#F97316] focus:ring-[#F97316]/20" />
+              <input 
+                type="checkbox" 
+                id="terms" 
+                checked={agreeTerms}
+                onChange={e => setAgreeTerms(e.target.checked)}
+                disabled={isLoading}
+                className="mt-1 w-4 h-4 rounded border-outline-variant text-[#F97316] focus:ring-[#F97316]/20" 
+              />
               <label className="text-xs text-on-surface-variant leading-relaxed" htmlFor="terms">
                 I agree to the <Link className="text-[#F97316] font-semibold hover:underline" to="/terms">Terms of Service</Link> and <Link className="text-[#F97316] font-semibold hover:underline" to="/privacy">Privacy Policy</Link>.
               </label>
             </div>
 
-            <Button type="submit" className="w-full bg-[#F97316] text-white hover:bg-[#EA580C] py-6 rounded-xl font-bold mt-4 shadow-lg shadow-orange-500/10 flex items-center justify-center gap-2">
-               Create Account
-               <ArrowRight className="w-4 h-4" />
+            <Button 
+              type="submit" 
+              className="w-full bg-[#F97316] text-white hover:bg-[#EA580C] py-6 rounded-xl font-bold mt-4 shadow-lg shadow-orange-500/10 flex items-center justify-center gap-2"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Creating Account...</span>
+                </>
+              ) : (
+                <>
+                  <span>Create Account</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -78,12 +163,14 @@ export const SignupPage = () => {
               <span className="absolute bg-surface-container-lowest px-4 text-[10px] font-bold uppercase tracking-[0.2em] text-outline">Or join with</span>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="flex items-center gap-2 py-3">
+              <Button variant="outline" className="flex items-center gap-2 py-3" disabled={isLoading}>
                 <img className="w-4 h-4" src="https://www.google.com/favicon.ico" alt="Google" />
                 <span className="text-sm font-semibold">Google</span>
               </Button>
-              <Button variant="outline" className="flex items-center gap-2 py-3">
-                <Linkedin className="w-4 h-4 text-[#0077b5]" />
+              <Button variant="outline" className="flex items-center gap-2 py-3" disabled={isLoading}>
+                <svg className="w-4 h-4 text-[#0077b5]" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.475-2.236-1.986-2.236-1.081 0-1.722.722-2.002 1.413-.103.25-.129.599-.129.949v5.443h-3.554s.047-8.836 0-9.754h3.554v1.383c.43-.664 1.199-1.609 2.915-1.609 2.129 0 3.727 1.39 3.727 4.377v5.603zM5.337 8.855c-1.144 0-1.915-.759-1.915-1.71 0-.956.77-1.71 1.958-1.71 1.187 0 1.914.75 1.939 1.71 0 .951-.752 1.71-1.982 1.71zm1.581 11.597H3.715V9.548h3.203v10.904zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/>
+                </svg>
                 <span className="text-sm font-semibold">LinkedIn</span>
               </Button>
             </div>

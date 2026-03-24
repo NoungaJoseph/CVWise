@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useEditor } from '@/src/lib/EditorContext';
+import { useAuth } from '@/src/lib/AuthContext';
 import { Button } from '@/src/components/ui';
 import { Download, ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,27 +18,30 @@ import { PinkAesthetic } from '@/src/components/templates/PinkAesthetic';
 
 export const PreviewPage = () => {
   const { cvData } = useEditor();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const cvRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   const handleDownloadPDF = async () => {
-    setIsDownloading(true);
-    try {
-      // Get token from localStorage
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        alert('Please login to download CV');
-        navigate('/login');
-        return;
-      }
+    if (!token) {
+      alert('Please login to download your CV');
+      navigate('/login');
+      return;
+    }
 
+    setIsDownloading(true);
+    setError(null);
+    try {
       // Call backend API to generate PDF
       await generatePdfDownload(token, cvData);
       console.log('PDF downloaded successfully');
-    } catch (error) {
-      console.error('PDF Download Error:', error);
-      alert('Failed to generate PDF. Please try again.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to generate PDF';
+      setError(errorMessage);
+      console.error('PDF Download Error:', err);
+      alert(errorMessage);
     } finally {
       setIsDownloading(false);
     }
@@ -88,6 +92,13 @@ export const PreviewPage = () => {
           </Button>
         </div>
       </div>
+
+      {/* Error display */}
+      {error && (
+        <div className="max-w-[840px] mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm font-medium">{error}</p>
+        </div>
+      )}
 
       {/* A4 paper — exactly 794×1122px */}
       <div
