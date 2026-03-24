@@ -1,6 +1,6 @@
 import express from 'express';
 import { ObjectId } from 'mongodb';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
