@@ -68,6 +68,34 @@ export const DashboardPage = () => {
       path: '/editor/skills'
     },
     { 
+      id: 'languages',
+      icon: 'language', 
+      title: 'Languages', 
+      status: cvData.languages.length > 0 ? 'Complete' : 'Empty',
+      path: '/editor/languages'
+    },
+    { 
+      id: 'certifications',
+      icon: 'certificate', 
+      title: 'Certifications', 
+      status: cvData.certifications.length > 0 ? 'Complete' : 'Empty',
+      path: '/editor/certifications'
+    },
+    { 
+      id: 'awards',
+      icon: 'star', 
+      title: 'Awards', 
+      status: cvData.awards.length > 0 ? 'Complete' : 'Empty',
+      path: '/editor/awards'
+    },
+    { 
+      id: 'references',
+      icon: 'group', 
+      title: 'References', 
+      status: cvData.references.length > 0 ? 'Complete' : 'Empty',
+      path: '/editor/references'
+    },
+    { 
       id: 'projects',
       icon: 'folder', 
       title: 'Projects', 
