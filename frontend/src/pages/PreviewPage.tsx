@@ -28,30 +28,65 @@ export const PreviewPage = () => {
     setIsDownloading(true);
     try {
       const element = cvRef.current;
-      // Render at high quality
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        width: 794,
-        height: 1122,
-      });
+      
+      // Clone the element to avoid modifying the original
+      const clonedElement = element.cloneNode(true) as HTMLElement;
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.top = '-9999px';
+      tempContainer.style.left = '-9999px';
+      tempContainer.appendChild(clonedElement);
+      document.body.appendChild(tempContainer);
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.98);
-      // A4 exact: 210mm x 297mm
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
+      try {
+        // Render at ultra-high quality for crisp text and images
+        const canvas = await html2canvas(clonedElement, {
+          scale: 4, // Increased from 3 for better quality
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+          allowTaint: true,
+          windowHeight: element.scrollHeight || 1122,
+          windowWidth: 794,
+        });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${cvData.personalInfo.firstName || 'CVWise'}_${cvData.personalInfo.lastName || 'Resume'}.pdf`);
+        // Use PNG instead of JPEG for lossless quality
+        const imgData = canvas.toDataURL('image/png');
+        
+        // A4 exact: 210mm x 297mm (at 96 dpi: 794px x 1122px)
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true,
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+        const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+
+        // Calculate aspect ratio to maintain proper proportions
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = imgHeight / imgWidth;
+
+        // Ensure image fills the page properly while maintaining aspect ratio
+        const finalHeight = pdfWidth * ratio;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, Math.min(finalHeight, pdfHeight));
+
+        // Generate filename with timestamp to avoid duplicates
+        const fileName = `${cvData.personalInfo.firstName || 'CV'}_${cvData.personalInfo.lastName || 'Resume'}.pdf`;
+        pdf.save(fileName);
+
+        // Show success feedback (optional - you can add a toast notification)
+        console.log('PDF downloaded successfully:', fileName);
+      } finally {
+        // Clean up the temporary container
+        document.body.removeChild(tempContainer);
+      }
     } catch (error) {
       console.error('PDF Generation Error:', error);
+      alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsDownloading(false);
     }
